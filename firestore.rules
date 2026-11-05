@@ -1,0 +1,247 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'dembedomingos236@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Connection testing doc
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId && (incoming().role == 'buyer' || incoming().role == 'affiliate' || incoming().role == 'seller' || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Seller stores
+    match /sellerStores/{storeId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().ownerId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Products catalog
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().sellerId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().sellerId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().sellerId == request.auth.uid || isAdmin());
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() || isSignedIn();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.affiliateId == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.sellerIds is list && request.auth.uid in resource.data.sellerIds)
+      );
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        existing().buyerId == request.auth.uid ||
+        isAdmin() ||
+        (existing().sellerIds is list && request.auth.uid in existing().sellerIds)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Seller Suborders
+    match /sellerSuborders/{suborderId} {
+      allow get: if isSignedIn() && (resource.data.sellerId == request.auth.uid || resource.data.buyerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (existing().sellerId == request.auth.uid || existing().buyerId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Commission Records (Platform 5% + Affiliate splits)
+    match /commissionRecords/{commissionId} {
+      allow get: if isSignedIn() && (resource.data.sellerId == request.auth.uid || resource.data.affiliateId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && (resource.data.sellerId == request.auth.uid || resource.data.affiliateId == request.auth.uid));
+      allow delete: if isAdmin();
+    }
+
+    // Legacy Commission Ledger
+    match /commissionLedger/{ledgerId} {
+      allow get: if isSignedIn() && (resource.data.sellerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Affiliate Campaigns
+    match /affiliateCampaigns/{campaignId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().sellerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (existing().sellerId == request.auth.uid || isAdmin());
+    }
+
+    // Affiliate Applications
+    match /affiliateApplications/{applicationId} {
+      allow get: if isSignedIn() && (resource.data.affiliateId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().affiliateId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().sellerId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Affiliate Clicks
+    match /affiliateClicks/{clickId} {
+      allow get, list: if isSignedIn() && (resource.data.affiliateId == request.auth.uid || isAdmin());
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Withdrawal Requests
+    match /withdrawalRequests/{requestId} {
+      allow get, list: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin() || isSignedIn();
+    }
+
+    // Payment Attempts
+    match /paymentAttempts/{attemptId} {
+      allow get: if isSignedIn() && (resource.data.buyerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (existing().buyerId == request.auth.uid || isAdmin());
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().buyerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (existing().buyerId == request.auth.uid || isAdmin());
+    }
+
+    // Reports
+    match /reports/{reportId} {
+      allow get: if isSignedIn() && (resource.data.reporterId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && incoming().reporterId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Support Tickets
+    match /supportTickets/{ticketId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Platform Settings
+    match /platformSettings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() || isSignedIn();
+    }
+
+    // Chat messages
+    match /chatMessages/{messageId} {
+      allow get: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().senderId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admin Notifications & Alert Center
+    match /adminNotifications/{notificationId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Notification Channel Preferences
+    match /notificationSettings/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Contact Messages to Administrator
+    match /contactMessages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Academia de Vendas e Marketing Digital - Courses
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Course Enrollments & Progress
+    match /courseEnrollments/{enrollmentId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Merit Reward Campaigns & Merit Awards
+    match /meritCampaigns/{campaignId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /meritAwards/{awardId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin() || isSignedIn();
+    }
+  }
+}
+

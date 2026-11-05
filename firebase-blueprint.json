@@ -1,0 +1,334 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role (buyer, affiliate, seller, admin)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "role": { "type": "string", "enum": ["buyer", "affiliate", "seller", "admin"] },
+        "affiliateCode": { "type": "string" },
+        "affiliateBalancePending": { "type": "number" },
+        "affiliateBalanceAvailable": { "type": "number" },
+        "province": { "type": "string" },
+        "municipality": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "SellerStore": {
+      "title": "SellerStore",
+      "description": "Store information for registered sellers",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "province": { "type": "string" },
+        "acceptsCashOnDelivery": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "pending_review", "suspended"] },
+        "commissionRate": { "type": "number" }
+      },
+      "required": ["storeId", "ownerId", "name", "phone", "province", "status"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product listed on Mercado Angola with affiliate configurations",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "storeName": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "number" },
+        "condition": { "type": "string", "enum": ["novo", "usado"] },
+        "province": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "pending_approval", "published", "rejected", "suspended"] },
+        "affiliateEnabled": { "type": "boolean" },
+        "affiliateCommissionRate": { "type": "number" },
+        "requiresAffiliateApproval": { "type": "boolean" }
+      },
+      "required": ["productId", "sellerId", "name", "price", "category", "stock", "condition", "province", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase order with affiliate tracking",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "orderStatus": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "affiliateReferralCode": { "type": "string" },
+        "affiliateGrossCommission": { "type": "number" },
+        "platformFeeAmount": { "type": "number" }
+      },
+      "required": ["orderId", "orderNumber", "buyerId", "totalAmount", "paymentMethod", "paymentStatus", "orderStatus"]
+    },
+    "SellerSuborder": {
+      "title": "SellerSuborder",
+      "description": "Sub-order partitioned per seller within an order",
+      "type": "object",
+      "properties": {
+        "suborderId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "total": { "type": "number" },
+        "platformFeeAmount": { "type": "number" },
+        "affiliateCommissionAmount": { "type": "number" },
+        "netSellerAmount": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["suborderId", "orderId", "sellerId", "total", "status"]
+    },
+    "CommissionRecord": {
+      "title": "CommissionRecord",
+      "description": "Financial ledger entry detailing platform 5% fee and affiliate commission lifecycle",
+      "type": "object",
+      "properties": {
+        "commissionId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "saleAmount": { "type": "number" },
+        "platformFeeAmount": { "type": "number" },
+        "affiliateGrossCommission": { "type": "number" },
+        "platformServiceFeeOnAffiliateAmount": { "type": "number" },
+        "affiliateNetCommission": { "type": "number" },
+        "sellerNetAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "validation_period", "approved", "available_for_withdrawal", "processing_payout", "paid", "reversed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["commissionId", "orderId", "sellerId", "saleAmount", "platformFeeAmount", "status"]
+    },
+    "AffiliateCampaign": {
+      "title": "AffiliateCampaign",
+      "description": "Campaign for product promotion by affiliates",
+      "type": "object",
+      "properties": {
+        "campaignId": { "type": "string" },
+        "productId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "storeName": { "type": "string" },
+        "commissionRate": { "type": "number" },
+        "estimatedCommissionKz": { "type": "number" },
+        "requiresApproval": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "paused", "closed"] }
+      },
+      "required": ["campaignId", "productId", "sellerId", "commissionRate", "status"]
+    },
+    "AffiliateApplication": {
+      "title": "AffiliateApplication",
+      "description": "Affiliate application to promote gated campaigns",
+      "type": "object",
+      "properties": {
+        "applicationId": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["applicationId", "campaignId", "sellerId", "affiliateId", "status"]
+    },
+    "AffiliateClick": {
+      "title": "AffiliateClick",
+      "description": "Recorded click on an affiliate referral link",
+      "type": "object",
+      "properties": {
+        "clickId": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "productId": { "type": "string" },
+        "referrerSource": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["clickId", "affiliateId", "referralCode", "timestamp"]
+    },
+    "WithdrawalRequest": {
+      "title": "WithdrawalRequest",
+      "description": "Payout request by an affiliate for approved commissions",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "affiliateName": { "type": "string" },
+        "amount": { "type": "number" },
+        "bankDetails": { "type": "object" },
+        "status": { "type": "string", "enum": ["pending", "processing", "completed", "rejected"] },
+        "requestedAt": { "type": "string" }
+      },
+      "required": ["requestId", "affiliateId", "amount", "status", "requestedAt"]
+    },
+    "PlatformSettings": {
+      "title": "PlatformSettings",
+      "description": "Global marketplace settings and commission fee defaults",
+      "type": "object",
+      "properties": {
+        "defaultCommissionRate": { "type": "number" },
+        "affiliateServiceFeeRate": { "type": "number" },
+        "fixedFee": { "type": "number" },
+        "electronicPaymentsActive": { "type": "boolean" },
+        "multicaixaSandboxMode": { "type": "boolean" },
+        "minimumWithdrawalAmount": { "type": "number" }
+      },
+      "required": ["defaultCommissionRate", "affiliateServiceFeeRate"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Audit trail for sensitive financial, affiliate and moderation events",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string" },
+        "actorId": { "type": "string" },
+        "action": { "type": "string" },
+        "entityType": { "type": "string" },
+        "entityId": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["logId", "actorId", "action", "entityType", "entityId"]
+    },
+    "AdminNotification": {
+      "title": "AdminNotification",
+      "description": "Real-time notification for marketplace administrator (applications, sales, payments, security, financial)",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "category": { "type": "string", "enum": ["vendas", "candidaturas", "pagamentos", "seguranca", "financeiro", "sistema"] },
+        "priority": { "type": "string", "enum": ["critico", "normal", "informativo"] },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "event": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["notificationId", "category", "priority", "title", "message", "event", "read", "createdAt"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Message from customer, seller, company or affiliate to the administrator",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderEmail": { "type": "string" },
+        "senderPhone": { "type": "string" },
+        "userType": { "type": "string", "enum": ["cliente", "empresa", "vendedor", "afiliado"] },
+        "subject": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "em_atendimento", "resolvido"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["messageId", "senderName", "senderEmail", "subject", "content", "status", "createdAt"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Educational course in Academia de Vendas e Marketing Digital",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "meritEligible": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["courseId", "title", "price", "category", "difficulty", "isPublished", "createdAt"]
+    },
+    "CourseEnrollment": {
+      "title": "CourseEnrollment",
+      "description": "User enrollment record for paid or merit-awarded course",
+      "type": "object",
+      "properties": {
+        "enrollmentId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "userId": { "type": "string" },
+        "accessType": { "type": "string", "enum": ["paid", "merit_award", "admin_grant"] },
+        "amountPaid": { "type": "number" },
+        "progressPercentage": { "type": "number" },
+        "enrolledAt": { "type": "string" }
+      },
+      "required": ["enrollmentId", "courseId", "userId", "accessType", "amountPaid", "enrolledAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/User",
+      "description": "User profiles with role permissions"
+    },
+    "/sellerStores/{storeId}": {
+      "schema": "#/entities/SellerStore",
+      "description": "Seller store profile and configurations"
+    },
+    "/products/{productId}": {
+      "schema": "#/entities/Product",
+      "description": "Marketplace products catalog with affiliate rules"
+    },
+    "/orders/{orderId}": {
+      "schema": "#/entities/Order",
+      "description": "Customer orders with referral attribution"
+    },
+    "/sellerSuborders/{suborderId}": {
+      "schema": "#/entities/SellerSuborder",
+      "description": "Suborders per seller with financial split"
+    },
+    "/commissionRecords/{commissionId}": {
+      "schema": "#/entities/CommissionRecord",
+      "description": "Ledger of sales, platform fees and affiliate earnings"
+    },
+    "/affiliateCampaigns/{campaignId}": {
+      "schema": "#/entities/AffiliateCampaign",
+      "description": "Promotional campaigns for affiliates"
+    },
+    "/affiliateApplications/{applicationId}": {
+      "schema": "#/entities/AffiliateApplication",
+      "description": "Affiliate applications for restricted campaigns"
+    },
+    "/affiliateClicks/{clickId}": {
+      "schema": "#/entities/AffiliateClick",
+      "description": "Clicks recorded on referral links"
+    },
+    "/withdrawalRequests/{requestId}": {
+      "schema": "#/entities/WithdrawalRequest",
+      "description": "Affiliate payout requests"
+    },
+    "/platformSettings/{settingId}": {
+      "schema": "#/entities/PlatformSettings",
+      "description": "Global fees and platform policies"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "#/entities/AuditLog",
+      "description": "System and financial audit trail"
+    },
+    "/adminNotifications/{notificationId}": {
+      "schema": "#/entities/AdminNotification",
+      "description": "Real-time administrator alerts and audit notifications"
+    },
+    "/contactMessages/{messageId}": {
+      "schema": "#/entities/ContactMessage",
+      "description": "Messages sent to administrator from contact form"
+    },
+    "/courses/{courseId}": {
+      "schema": "#/entities/Course",
+      "description": "Courses catalog in Academia de Vendas"
+    },
+    "/courseEnrollments/{enrollmentId}": {
+      "schema": "#/entities/CourseEnrollment",
+      "description": "Enrolled students and verified access"
+    }
+  }
+}

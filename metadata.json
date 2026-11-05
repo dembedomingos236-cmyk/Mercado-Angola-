@@ -1,0 +1,6 @@
+{
+  "name": "Mercado Angola",
+  "description": "Marketplace moderno e confiável de compras e vendas em Angola com pagamentos em Kwanzas (AOA/Kz).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
